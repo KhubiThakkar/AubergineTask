@@ -11,6 +11,9 @@ const pool = new Pool({
   database: process.env.DB_DATABASE,
   password: process.env.DB_PASSWORD,
   port: 5432, // Default PostgreSQL port
+  ssl: {
+    rejectUnauthorized: false,
+  },
 });
 
 const salt = bcrypt.genSaltSync(10);
@@ -26,7 +29,7 @@ app.post("/register", async (req, res) => {
   const { username, password, email } = req.body;
 
   try {
-    const query = `INSERT INTO "user" (username, password, email) VALUES ($1, $2, $3);`;
+    const query = `INSERT INTO "users" (name, password, email) VALUES ($1, $2, $3);`;
     const values = [username, bcrypt.hashSync(password, salt), email];
     await pool.query(query, values);
     res.status(200).json({ message: "User registered successfully." });
@@ -40,11 +43,11 @@ app.post("/login", async (req, res) => {
   const { username, password } = req.body;
 
   try {
-    const query = `SELECT password FROM "user" WHERE username = $1;`;
+    const query = `SELECT password FROM "users" WHERE name = $1;`;
     const values = [username];
     const result = await pool.query(query, values);
     if (result.rows.length === 0) {
-      res.status(401).json({ message: "Invalid username or password." });
+      res.status(401).json({ message: "Invalid name or password." });
       return;
     }
 
